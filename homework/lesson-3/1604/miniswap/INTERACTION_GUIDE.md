@@ -1,181 +1,97 @@
-# Interacting with MiniSwap Contract on PolkaVM
+# Interaction Guide - MiniSwap DApp
 
 ## Overview
-This guide explains how to interact with the deployed MiniSwap contract on the PolkaVM localNode network.
+This document provides instructions for interacting with the deployed MiniSwap decentralized exchange using the frontend application.
 
-## Deployed Contract Information
-- **Contract Address**: `0x3Ae92CCb63104Cc7579Af236F102d12c5872AAa2`
-- **Network**: PolkaVM localNode
-- **Chain ID**: 420420420
+## Deployed Contracts
+The following contracts are deployed on the local Hardhat node:
+
+- **MiniSwap Contract**: `0x3DAFAe4d0C4909Fc8551442FB4320102289CB505`
+- **Token A (TKNA)**: `0x71805a443a9ecF3dda744B2B548657fd4F3302F3`
+- **Token B (TKNB)**: `0xA97Bf07F0a3655EcB63B17AC64d7f816557f69f3`
 
 ## Prerequisites
-Make sure you have:
-1. The substrate node running:
-```bash
-./bin/substrate-node --dev --rpc-cors=all --unsafe-rpc-external --rpc-methods=unsafe &
-```
+1. **MetaMask Wallet** installed in your browser
+2. **Access to the frontend application** at: https://<your-proxy-url>.dsw-gateway-cn-hangzhou.data.aliyun.com/
+3. **Local Hardhat node running** (on port 8545)
 
-2. The eth-rpc adapter running:
-```bash
-./bin/eth-rpc --node-rpc-url ws://127.0.0.1:9944 --rpc-port 8545 --unsafe-rpc-external --rpc-methods unsafe &
-```
+## Network Setup for MetaMask
+Before connecting to the DApp, you need to configure MetaMask to connect to the local Hardhat network:
 
-3. Your environment configured with a funded account (PRIVATE_KEY in .env file)
+1. Open MetaMask and click the network selector (top-left corner)
+2. Click "Add Network" or "+ Add Network"
+3. Enter the following details:
+   - **Network Name**: Local Hardhat Node
+   - **New RPC URL**: `http://127.0.0.1:8545` (or the exposed HTTPS URL if using a proxy)
+   - **Chain ID**: `420420420` (from hardhat.config.ts)
+   - **Currency Symbol**: ETH
+   - **Block Explorer URL**: (leave blank)
 
-## Interaction Methods
+## Frontend Application Usage
+### 1. Connecting Your Wallet
+1. Navigate to the frontend application
+2. Click the "Connect Wallet" button
+3. Select MetaMask when prompted
+4. Approve the connection in MetaMask
+5. You should see your account address appear in the header
 
-### 1. Using Hardhat Scripts
+### 2. Adding Liquidity
+1. On the Liquidity section, enter the following:
+   - **Token A Address**: `0x71805a443a9ecF3dda744B2B548657fd4F3302F3`
+   - **Token B Address**: `0xA97Bf07F0a3655EcB63B17AC64d7f816557f69f3`
+   - **Amount**: Enter desired liquidity amount (e.g., `100`)
+2. Click "Approve" for each token (if not already approved)
+3. Click "Add Liquidity"
+4. Confirm the transaction in MetaMask
+5. You'll receive liquidity shares proportional to the pool size
 
-Create a new script in `scripts/interact.ts`:
+### 3. Swapping Tokens
+1. On the Swap section, enter the following:
+   - **Token In Address**: Either Token A or Token B address
+   - **Token Out Address**: The other token address
+   - **Amount**: Enter amount to swap (e.g., `10`)
+2. Click "Approve" for the input token (if not already approved)
+3. Click "Swap"
+4. Confirm the transaction in MetaMask
+5. Your tokens will be swapped at a 1:1 ratio
 
-```typescript
-import { ethers } from "hardhat";
-import { MiniSwap__factory } from "../typechain-types";
-
-async function main() {
-  // Get the deployed contract instance
-  const contractAddress = "0x3Ae92CCb63104Cc7579Af236F102d12c5872AAa2";
-  const [signer] = await ethers.getSigners();
-  
-  console.log("Interacting with contract at:", contractAddress);
-  console.log("Using account:", await signer.getAddress());
-
-  const miniSwap = MiniSwap__factory.connect(contractAddress, signer);
-
-  // Example: Get contract details
-  console.log("Connected to MiniSwap contract");
-  
-  // You can now call read-only functions, send transactions, etc.
-  // Example operations:
-  /*
-  // Add liquidity (requires approval first)
-  const tx = await miniSwap.addLiquidity(tokenA, tokenB, amount);
-  await tx.wait();
-  
-  // Call view functions
-  const poolInfo = await miniSwap.liquidityPools(poolKey);
-  */
-}
-
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
-```
-
-Then run the script:
-```bash
-POLKA_NODE=true npx hardhat run scripts/interact.ts --network localNode
-```
-
-### 2. Using Custom Scripts
-
-Create specialized scripts for different interactions:
-
-#### Adding Liquidity Script (`scripts/addLiquidity.ts`)
-```typescript
-import { ethers } from "hardhat";
-import { MiniSwap__factory, MockERC20__factory } from "../typechain-types";
-
-async function addLiquidity() {
-  const contractAddress = "0x3Ae92CCb63104Cc7579Af236F102d12c5872AAa2";
-  const [signer] = await ethers.getSigners();
-  
-  const miniSwap = MiniSwap__factory.connect(contractAddress, signer);
-  
-  // You'll need to have deployed MockERC20 tokens first
-  // Example:
-  // const tokenA = MockERC20__factory.connect(tokenAAddress, signer);
-  // const tokenB = MockERC20__factory.connect(tokenBAddress, signer);
-  
-  // Approve tokens for spending
-  // await tokenA.approve(contractAddress, amount);
-  // await tokenB.approve(contractAddress, amount);
-  
-  // Add liquidity
-  // const tx = await miniSwap.addLiquidity(tokenA.address, tokenB.address, amount);
-  // console.log("Liquidity added, transaction hash:", tx.hash);
-}
-
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
-```
-
-### 3. Using Web3/Ethers Directly
-
-You can also interact directly using ethers:
-
-```typescript
-import { ethers } from "ethers";
-
-// Connect to the PolkaVM RPC
-const provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545");
-
-// Initialize with your private key
-const privateKey = process.env.PRIVATE_KEY; // Make sure this is set in your .env
-const wallet = new ethers.Wallet(privateKey!, provider);
-
-// Connect to the deployed contract
-const contractABI = [...]; // Your contract ABI
-const contractAddress = "0x3Ae92CCb63104Cc7579Af236F102d12c5872AAa2";
-const contract = new ethers.Contract(contractAddress, contractABI, wallet);
-
-// Example: Add liquidity
-// const tx = await contract.addLiquidity(tokenA, tokenB, amount);
-// await tx.wait();
-// console.log("Transaction confirmed:", tx.hash);
-```
-
-### 4. Querying Contract State
-
-You can read contract state without sending transactions:
-
-```bash
-# Using curl to query contract state
-curl -X POST http://127.0.0.1:8545 \
--H "Content-Type: application/json" \
--d '{
-  "jsonrpc":"2.0",
-  "method":"eth_call",
-  "params":[{
-    "to":"0x3Ae92CCb63104Cc7579Af236F102d12c5872AAa2",
-    "data":"0x..." # ABI-encoded function call
-  }, "latest"],
-  "id":1
-}'
-```
-
-### 5. Using MetaMask (Alternative)
-
-If you want to interact through a wallet like MetaMask:
-1. Add the PolkaVM network to MetaMask:
-   - Network Name: PolkaVM Local
-   - RPC URL: http://127.0.0.1:8545
-   - Chain ID: 420420420
-   - Currency Symbol: ROC (or your token symbol)
-
-2. Import an account that has funds on the PolkaVM network
-3. Use a dApp interface to interact with the contract at `0x3Ae92CCb63104Cc7579Af236F102d12c5872AAa2`
-
-## Important Notes
-
-1. **Token Approvals**: Before adding liquidity or performing swaps, you must approve the MiniSwap contract to spend your tokens.
-
-2. **Account Funding**: Ensure your account has sufficient funds in the PolkaVM network. You can check your balance with:
-```bash
-POLKA_NODE=true npx hardhat run scripts/checkBalance.ts --network localNode
-```
-
-3. **Gas Costs**: Transactions on PolkaVM may have different gas costs than Ethereum.
-
-4. **Pool Keys**: Remember that pool keys are computed deterministically based on token addresses. Always ensure you're using the correct pool key for operations.
+### 4. Removing Liquidity
+1. On the Liquidity section, enter the following:
+   - **Token A Address**: `0x71805a443a9ecF3dda744B2B548657fd4F3302F3`
+   - **Token B Address**: `0xA97Bf07F0a3655EcB63B17AC64d7f816557f69f3`
+   - **Amount**: Enter liquidity shares to remove (max is your current share)
+2. Click "Remove Liquidity"
+3. Confirm the transaction in MetaMask
+4. You'll receive your proportional share of both tokens back
 
 ## Troubleshooting
+### Connection Issues
+- Ensure the local Hardhat node is running: `npx hardhat node`
+- Verify MetaMask is connected to the correct network
+- Check that the RPC URL is accessible
 
-- If you get "Invalid Transaction" error, check your chain ID and private key format
-- If you get "Insufficient funds", make sure your account has tokens
-- If function calls fail, ensure proper token approvals have been made
+### Transaction Failures
+- Ensure you have sufficient ETH for gas fees
+- Check that token approvals are set properly
+- Verify token addresses match the deployed contracts
 
-Happy interacting with your MiniSwap contract on PolkaVM!
+### Frontend Not Updating
+- Refresh the page after transactions confirm
+- Check browser console for any error messages
+- Ensure you're using a modern browser with JavaScript enabled
+
+## Contract Information
+### MiniSwap Features
+- 1:1 token swaps for supported pairs
+- Liquidity provision with share-based tracking
+- No liquidity fees for this implementation
+
+### Pool Key Calculation
+The contract uses consistent token ordering to create unique pool identifiers:
+- If TokenA address < TokenB address: pool key uses [TokenA, TokenB]
+- Otherwise: pool key uses [TokenB, TokenA]
+
+## Development Notes
+- The frontend uses the same contract ABI as defined in `ui/src/constants.ts`
+- All token transfers follow ERC20 standards
+- Transactions require user confirmation in MetaMask
